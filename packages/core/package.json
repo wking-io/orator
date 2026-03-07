@@ -1,0 +1,32 @@
+{
+  "name": "@orator/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./ids": "./src/ids.ts",
+    "./domain/slide": "./src/domain/slide.ts",
+    "./domain/deck": "./src/domain/deck.ts",
+    "./domain/theme": "./src/domain/theme.ts",
+    "./domain/transition": "./src/domain/transition.ts",
+    "./domain/presenter-notes": "./src/domain/presenter-notes.ts",
+    "./lib/navigation": "./src/lib/navigation.ts",
+    "./lib/timer": "./src/lib/timer.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "lint": "oxlint",
+    "fmt": "oxfmt"
+  },
+  "dependencies": {
+    "effect": "catalog:",
+    "ulid": "catalog:"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "typescript": "catalog:"
+  }
+}

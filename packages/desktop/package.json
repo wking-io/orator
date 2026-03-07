@@ -1,0 +1,35 @@
+{
+  "name": "@orator/desktop",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "package": "electron-vite build && electron-builder",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint",
+    "fmt": "oxfmt"
+  },
+  "dependencies": {
+    "@orator/app": "workspace:*",
+    "@orator/core": "workspace:*",
+    "@orator/example-talk": "workspace:*",
+    "@remix-run/component": "catalog:",
+    "@remix-run/interaction": "catalog:"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "catalog:",
+    "@types/bun": "catalog:",
+    "electron": "^40.1.0",
+    "electron-builder": "^26.0.0",
+    "electron-vite": "^5.0.0",
+    "esbuild": "0.27.3",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

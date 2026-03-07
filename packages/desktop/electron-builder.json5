@@ -1,0 +1,54 @@
+{
+  $schema: "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  appId: "com.orator.desktop",
+  productName: "Orator",
+  directories: {
+    output: "release",
+    buildResources: "build",
+  },
+  files: ["dist/**/*"],
+  mac: {
+    target: [
+      {
+        target: "dmg",
+        arch: ["arm64", "x64"],
+      },
+      {
+        target: "zip",
+        arch: ["arm64", "x64"],
+      },
+    ],
+    hardenedRuntime: true,
+    gatekeeperAssess: false,
+  },
+  win: {
+    target: [
+      {
+        target: "nsis",
+        arch: ["x64"],
+      },
+      {
+        target: "zip",
+        arch: ["x64"],
+      },
+    ],
+  },
+  linux: {
+    target: [
+      {
+        target: "AppImage",
+        arch: ["x64", "arm64"],
+      },
+      {
+        target: "deb",
+        arch: ["x64", "arm64"],
+      },
+    ],
+    category: "Office",
+  },
+  nsis: {
+    oneClick: false,
+    perMachine: false,
+    allowToChangeInstallationDirectory: true,
+  },
+}

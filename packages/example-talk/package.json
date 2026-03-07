@@ -1,0 +1,27 @@
+{
+  "name": "@orator/example-talk",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint",
+    "fmt": "oxfmt"
+  },
+  "dependencies": {
+    "@orator/app": "workspace:*",
+    "@orator/core": "workspace:*",
+    "@orator/ui": "workspace:*",
+    "@orator/utils": "workspace:*",
+    "@remix-run/component": "catalog:"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "typescript": "catalog:"
+  }
+}
