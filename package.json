@@ -13,8 +13,7 @@
     "check": "bun run typecheck && bun run lint",
     "test": "turbo run test",
     "dev:desktop": "bun run --cwd packages/desktop dev",
-    "build:desktop": "bun run --cwd packages/desktop package",
-    "build:app": "bun run --cwd packages/app build"
+    "build:desktop": "bun run --cwd packages/desktop package"
   },
   "devDependencies": {
     "@effect/language-service": "0.72.0",

@@ -1,5 +1,6 @@
 import type { Handle } from "@remix-run/component";
-import { Slide, Centered } from "@orator/app";
+import { SlideRoot as Slide } from "@orator/ui/slide";
+import { Centered } from "@orator/ui/layout";
 
 export function ClosingSlide(_handle: Handle) {
   return () => (

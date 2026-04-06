@@ -13,9 +13,9 @@
     "fmt": "oxfmt"
   },
   "dependencies": {
-    "@orator/app": "workspace:*",
     "@orator/core": "workspace:*",
-    "@orator/example-talk": "workspace:*",
+    "@orator/react-miami-2026": "workspace:*",
+    "@orator/ui": "workspace:*",
     "@remix-run/component": "catalog:",
     "@remix-run/interaction": "catalog:"
   },
@@ -26,6 +26,7 @@
     "electron-builder": "^26.0.0",
     "electron-vite": "^5.0.0",
     "esbuild": "0.27.3",
+    "happy-dom": "20.4.0",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "tailwindcss": "catalog:",

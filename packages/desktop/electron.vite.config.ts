@@ -54,6 +54,11 @@ export default defineConfig(() => {
     renderer: {
       root: ".",
       plugins: [vitePluginRemix(), tailwindcss()],
+      server: {
+        watch: {
+          paths: [resolve(repoRoot, "packages")],
+        },
+      },
       build: {
         outDir: "dist/renderer",
         rollupOptions: {
@@ -64,10 +69,13 @@ export default defineConfig(() => {
       },
       resolve: {
         alias: {
-          "@app": resolve(repoRoot, "packages/app/src"),
           "@ui": resolve(repoRoot, "packages/ui/src"),
           "@utils": resolve(repoRoot, "packages/utils/src"),
           "@core": resolve(repoRoot, "packages/core/src"),
+          "unicornstudio/dist/unicornStudio.umd.js": resolve(
+            repoRoot,
+            "packages/ui/node_modules/unicornstudio/dist/unicornStudio.umd.js",
+          ),
         },
       },
     },

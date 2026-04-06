@@ -18,4 +18,4 @@ bun run dev:desktop
 - `@orator/ui` — Headless UI components
 - `@orator/core` — Domain models and navigation logic
 - `@orator/utils` — Shared utilities
-- `@orator/example-talk` — Sample conference talk
+- `@orator/react-miami-2026` — React Miami 2026 talk

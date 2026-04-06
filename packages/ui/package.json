@@ -11,7 +11,8 @@
     "./presenter-notes": "./src/presenter-notes/index.ts",
     "./transition": "./src/transition/index.ts",
     "./layout": "./src/layout/index.ts",
-    "./navigation": "./src/navigation/index.ts"
+    "./navigation": "./src/navigation/index.ts",
+    "./unicorn-studio": "./src/unicorn-studio/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -22,7 +23,8 @@
   "dependencies": {
     "@orator/core": "workspace:*",
     "@orator/utils": "workspace:*",
-    "@remix-run/component": "catalog:"
+    "@remix-run/component": "catalog:",
+    "unicornstudio": "github:hiunicornstudio/unicornstudio.js#v2.1.5"
   },
   "devDependencies": {
     "@types/bun": "catalog:",

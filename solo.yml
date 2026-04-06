@@ -1,0 +1,38 @@
+name: orator
+icon: null
+processes:
+  'turbo: fmt':
+    command: turbo run fmt
+    working_dir: null
+    auto_start: false
+    auto_restart: false
+    restart_when_changed: []
+    env: {}
+  ls:
+    command: ls
+    working_dir: null
+    auto_start: true
+    auto_restart: false
+    restart_when_changed: []
+    env: {}
+  'turbo: typecheck':
+    command: turbo run typecheck
+    working_dir: null
+    auto_start: false
+    auto_restart: false
+    restart_when_changed: []
+    env: {}
+  'turbo: test':
+    command: turbo run test
+    working_dir: null
+    auto_start: false
+    auto_restart: false
+    restart_when_changed: []
+    env: {}
+  'turbo: lint':
+    command: turbo run lint
+    working_dir: null
+    auto_start: false
+    auto_restart: false
+    restart_when_changed: []
+    env: {}

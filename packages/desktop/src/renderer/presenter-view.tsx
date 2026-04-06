@@ -1,7 +1,14 @@
 import type { Handle } from "@remix-run/component";
-import type { SlideComponent } from "../components/deck";
+import type { SlideComponent } from "./deck";
 import { type NavigationState, next, prev, initialNavigation } from "@orator/core/lib/navigation";
-import { type TimerState, initialTimer, start, stop, elapsed, formatElapsed } from "@orator/core/lib/timer";
+import {
+  type TimerState,
+  initialTimer,
+  start,
+  stop,
+  elapsed,
+  formatElapsed,
+} from "@orator/core/lib/timer";
 
 export function PresenterView(handle: Handle) {
   let nav: NavigationState = initialNavigation(0);
@@ -45,11 +52,11 @@ export function PresenterView(handle: Handle) {
           {NextSlide && <NextSlide />}
         </div>
         <div class="col-span-2 flex items-center justify-between px-4 py-2 bg-neutral-900 rounded">
-          <div class="text-sm text-neutral-400">
-            {currentNotes}
-          </div>
+          <div class="text-sm text-neutral-400">{currentNotes}</div>
           <div class="flex items-center gap-6 text-sm font-mono">
-            <span>{nav.current + 1} / {nav.total}</span>
+            <span>
+              {nav.current + 1} / {nav.total}
+            </span>
             <span>{formatElapsed(elapsedMs)}</span>
             <button
               class="px-2 py-1 bg-neutral-800 rounded text-xs"

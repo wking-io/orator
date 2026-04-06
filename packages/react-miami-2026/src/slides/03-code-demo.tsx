@@ -1,5 +1,7 @@
 import type { Handle } from "@remix-run/component";
-import { Slide, Split, StyledCodeBlock } from "@orator/app";
+import { SlideRoot as Slide } from "@orator/ui/slide";
+import { Split } from "@orator/ui/layout";
+import { CodeBlock as StyledCodeBlock } from "@orator/ui/code-block";
 
 export function CodeDemoSlide(_handle: Handle) {
   return () => (

@@ -26,4 +26,4 @@ Use bun. If a dependency is only used by one package, install it locally; otherw
 - `packages/ui` - Headless UI components (no styles, only behavior and data attributes)
 - `packages/app` - Application with styled components that use the headless UI base
 - `packages/core` - Domain models (Slide, Deck, Theme, Transition, Navigation)
-- `packages/example-talk` - Sample conference talk package
+- `packages/react-miami-2026` - React Miami 2026 talk package

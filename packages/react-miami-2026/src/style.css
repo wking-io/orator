@@ -1,0 +1,51 @@
+@import "tailwindcss";
+@import "dialkit/styles.css";
+
+@source "./";
+
+@theme {
+  --color-slide-bg: #e2d4c5;
+  --color-slide-fg: #2a1f2d;
+  --color-accent: #3b82f6;
+  --color-muted: #a1a1aa;
+  --color-surface: #18181b;
+  --color-border: #27272a;
+  --font-sans: Inter, system-ui, sans-serif;
+  --font-display: SCHABO, Inter, system-ui, sans-serif;
+  --font-heading: "Clash Display", Inter, system-ui, sans-serif;
+  --font-body: var(--font-sans);
+  --font-code: "Fira Code", monospace;
+}
+
+:root {
+  --sim-main: #241348;
+  --sim-opportunity: #e70e77;
+  --sim-networking: #130ff0;
+}
+
+.dialkit-panel-inner {
+  width: 320px;
+  transition:
+    width 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+    height 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-radius 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.dialkit-panel-content {
+  transition: opacity 0.15s ease;
+}
+
+.dialkit-dirty-dot {
+  display: none;
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #f59e0b;
+  pointer-events: none;
+  z-index: 1;
+}

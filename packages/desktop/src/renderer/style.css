@@ -1,5 +1,31 @@
 @import "tailwindcss";
-@import "@app/style.css";
+@import "./components.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-slide-bg: #e2d4c5;
+  --color-slide-fg: #2a1f2d;
+  --color-accent: #3b82f6;
+  --color-muted: #a1a1aa;
+  --color-surface: #d4c6b7;
+  --color-border: #c6b8a9;
+  --font-sans: Inter, system-ui, sans-serif;
+  --font-display: Inter, system-ui, sans-serif;
+  --font-heading: Inter, system-ui, sans-serif;
+  --font-body: Inter, system-ui, sans-serif;
+  --font-code: "Fira Code", monospace;
+}
+
+.dark {
+  --color-slide-bg: #2a1f2d;
+  --color-slide-fg: #e2d4c5;
+  --color-surface: #18181b;
+  --color-border: #27272a;
+}
+
+@source "../../../ui/src";
+@source "../../../react-miami-2026/src";
 
 html,
 body,
