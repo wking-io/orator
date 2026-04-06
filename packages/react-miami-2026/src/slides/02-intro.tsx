@@ -21,6 +21,7 @@ export function IntroSlide(_handle: Handle) {
           opportunityOrbitSpeed={defaults.opportunityOrbitSpeed}
           fogOfWar={!!defaults.fogOfWar}
           fogDistance={defaults.fogDistance}
+          networkingPullBoost={defaults.networkingPullBoost}
           onStateInit={(state: SimState) => {
             simState = state;
           }}
@@ -41,6 +42,10 @@ export function IntroSlide(_handle: Handle) {
               params.opportunityOrbitSpeed,
               !!params.fogOfWar,
               params.fogDistance,
+              params.networkingPullBoost,
+              params.networkFogMultiplier,
+              params.noteworthyCurve,
+              params.dotGridSpacing,
             );
           }
         }}

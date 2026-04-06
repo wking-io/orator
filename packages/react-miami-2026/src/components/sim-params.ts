@@ -11,6 +11,10 @@ export interface SimParams {
   opportunityOrbitSpeed: number;
   fogOfWar: number;
   fogDistance: number;
+  networkingPullBoost: number;
+  networkFogMultiplier: number;
+  noteworthyCurve: number;
+  dotGridSpacing: number;
 }
 
 export const defaults: SimParams = {
@@ -23,7 +27,11 @@ export const defaults: SimParams = {
   networkingOrbitSpeed: 0.6,
   opportunityOrbitSpeed: 0.3,
   fogOfWar: 0,
-  fogDistance: 50,
+  fogDistance: 10,
+  networkingPullBoost: 1.3,
+  networkFogMultiplier: 1.3,
+  noteworthyCurve: 2,
+  dotGridSpacing: 8,
 };
 
 export const PANEL_ID = "sim-params";
@@ -41,6 +49,10 @@ export function buildDialConfig(): DialConfig {
       opportunityOrbitSpeed: [defaults.opportunityOrbitSpeed, 0, 5, 0.1],
       fogOfWar: [defaults.fogOfWar, 0, 1, 1],
       fogDistance: [defaults.fogDistance, 0, 500, 10],
+      networkingPullBoost: [defaults.networkingPullBoost, 1, 5, 0.1],
+      networkFogMultiplier: [defaults.networkFogMultiplier, 1, 5, 0.1],
+      noteworthyCurve: [defaults.noteworthyCurve, 0.5, 50, 0.1],
+      dotGridSpacing: [defaults.dotGridSpacing, 2, 30, 1],
     },
   };
 }
@@ -56,6 +68,10 @@ const pathToKey: Record<string, keyof SimParams> = {
   "simulation.opportunityOrbitSpeed": "opportunityOrbitSpeed",
   "simulation.fogOfWar": "fogOfWar",
   "simulation.fogDistance": "fogDistance",
+  "simulation.networkingPullBoost": "networkingPullBoost",
+  "simulation.networkFogMultiplier": "networkFogMultiplier",
+  "simulation.noteworthyCurve": "noteworthyCurve",
+  "simulation.dotGridSpacing": "dotGridSpacing",
 };
 
 export function paramsFromStore(values: Record<string, unknown>): SimParams {
@@ -74,6 +90,10 @@ export function paramsFromStore(values: Record<string, unknown>): SimParams {
     opportunityOrbitSpeed: g("simulation.opportunityOrbitSpeed", defaults.opportunityOrbitSpeed),
     fogOfWar: Math.round(g("simulation.fogOfWar", defaults.fogOfWar)),
     fogDistance: g("simulation.fogDistance", defaults.fogDistance),
+    networkingPullBoost: g("simulation.networkingPullBoost", defaults.networkingPullBoost),
+    networkFogMultiplier: g("simulation.networkFogMultiplier", defaults.networkFogMultiplier),
+    noteworthyCurve: g("simulation.noteworthyCurve", defaults.noteworthyCurve),
+    dotGridSpacing: g("simulation.dotGridSpacing", defaults.dotGridSpacing),
   };
 }
 

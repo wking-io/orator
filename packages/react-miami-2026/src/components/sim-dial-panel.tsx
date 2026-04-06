@@ -199,6 +199,8 @@ function renderRoot(root: HTMLElement) {
     folderInner?.appendChild(isToggle ? buildToggle(s) : buildSlider(s));
   }
 
+  content.appendChild(buildCurvePreview());
+
   inner.appendChild(content);
 
   inner.addEventListener("click", (e) => {
@@ -397,6 +399,121 @@ function buildToggle(s: SliderDef): HTMLElement {
   return wrapper;
 }
 
+// ── Curve preview SVG ─────────────────────────────────────
+
+const CURVE_W = 200;
+const CURVE_H = 80;
+const CURVE_PAD = 16;
+const CURVE_SAMPLES = 60;
+
+// noteworthy range from dial config
+const NW_MIN = 0.5;
+const NW_MAX = 1.5;
+
+function buildCurvePreview(): HTMLElement {
+  const wrapper = document.createElement("div");
+  wrapper.className = "dialkit-curve-preview";
+  wrapper.style.cssText = "padding:8px 12px 4px;";
+
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", `0 0 ${CURVE_W} ${CURVE_H}`);
+  svg.setAttribute("width", String(CURVE_W));
+  svg.setAttribute("height", String(CURVE_H));
+  svg.style.cssText = "display:block;width:100%;height:auto;";
+
+  // Axes
+  const axes = document.createElementNS(ns, "polyline");
+  axes.setAttribute(
+    "points",
+    `${CURVE_PAD},${CURVE_PAD} ${CURVE_PAD},${CURVE_H - CURVE_PAD} ${CURVE_W - CURVE_PAD},${CURVE_H - CURVE_PAD}`,
+  );
+  axes.setAttribute("fill", "none");
+  axes.setAttribute("stroke", "rgba(255,255,255,0.2)");
+  axes.setAttribute("stroke-width", "1");
+  svg.appendChild(axes);
+
+  // Curve path
+  const curvePath = document.createElementNS(ns, "polyline");
+  curvePath.setAttribute("fill", "none");
+  curvePath.setAttribute("stroke", "rgba(255,255,255,0.7)");
+  curvePath.setAttribute("stroke-width", "1.5");
+  curvePath.setAttribute("stroke-linejoin", "round");
+  curvePath.classList.add("curve-line");
+  svg.appendChild(curvePath);
+
+  // Current position dot
+  const dot = document.createElementNS(ns, "circle");
+  dot.setAttribute("r", "3");
+  dot.setAttribute("fill", "#fff");
+  dot.classList.add("curve-dot");
+  svg.appendChild(dot);
+
+  // Labels
+  const labelCurve = document.createElementNS(ns, "text");
+  labelCurve.setAttribute("x", String(CURVE_W - CURVE_PAD));
+  labelCurve.setAttribute("y", String(CURVE_PAD - 4));
+  labelCurve.setAttribute("text-anchor", "end");
+  labelCurve.setAttribute("fill", "rgba(255,255,255,0.4)");
+  labelCurve.setAttribute("font-size", "8");
+  labelCurve.setAttribute("font-family", "system-ui, sans-serif");
+  labelCurve.classList.add("curve-label");
+  svg.appendChild(labelCurve);
+
+  wrapper.appendChild(svg);
+  return wrapper;
+}
+
+const DIA_MIN = 4;
+const DIA_MAX = 56;
+
+/** Same normalization as simulation.tsx computeNw — maps raw pow to 4..44px diameter */
+function computeDia(noteworthy: number, curve: number): number {
+  let rawMin = Math.pow(NW_MIN, curve);
+  let rawMax = Math.pow(NW_MAX, curve);
+  let raw = Math.pow(noteworthy, curve);
+  let t = rawMax === rawMin ? 0 : (raw - rawMin) / (rawMax - rawMin);
+  return DIA_MIN + t * (DIA_MAX - DIA_MIN);
+}
+
+function updateCurvePreview(root: HTMLElement, noteworthy: number, curve: number) {
+  const svg = root.querySelector(".dialkit-curve-preview svg");
+  if (!svg) return;
+
+  const plotW = CURVE_W - CURVE_PAD * 2;
+  const plotH = CURVE_H - CURVE_PAD * 2;
+
+  // Build polyline points — Y axis is always 4..44px diameter
+  let points = "";
+  for (let i = 0; i <= CURVE_SAMPLES; i++) {
+    let t = i / CURVE_SAMPLES;
+    let nw = NW_MIN + t * (NW_MAX - NW_MIN);
+    let dia = computeDia(nw, curve);
+    let px = CURVE_PAD + t * plotW;
+    let py = CURVE_H - CURVE_PAD - ((dia - DIA_MIN) / (DIA_MAX - DIA_MIN)) * plotH;
+    points += `${px.toFixed(1)},${py.toFixed(1)} `;
+  }
+
+  let curveLine = svg.querySelector(".curve-line");
+  if (curveLine) curveLine.setAttribute("points", points.trim());
+
+  // Position dot at current noteworthy
+  let tCurrent = (noteworthy - NW_MIN) / (NW_MAX - NW_MIN);
+  tCurrent = Math.max(0, Math.min(1, tCurrent));
+  let diaCurrent = computeDia(noteworthy, curve);
+  let dotX = CURVE_PAD + tCurrent * plotW;
+  let dotY = CURVE_H - CURVE_PAD - ((diaCurrent - DIA_MIN) / (DIA_MAX - DIA_MIN)) * plotH;
+  let dot = svg.querySelector(".curve-dot");
+  if (dot) {
+    dot.setAttribute("cx", dotX.toFixed(1));
+    dot.setAttribute("cy", dotY.toFixed(1));
+  }
+
+  // Update label
+  let label = svg.querySelector(".curve-label");
+  if (label) label.textContent = `${diaCurrent.toFixed(0)}px dia`;
+}
+
 const pathToKey: Record<string, keyof typeof defaults> = {
   "simulation.opportunityCount": "opportunityCount",
   "simulation.networkingCount": "networkingCount",
@@ -454,6 +571,11 @@ function syncSliders(root: HTMLElement, values: Record<string, unknown>) {
       if (thumbEl) thumbEl.style.left = v ? "18px" : "2px";
     }
   }
+
+  // Update curve preview
+  let nw = typeof values["simulation.noteworthy"] === "number" ? (values["simulation.noteworthy"] as number) : defaults.noteworthy;
+  let curve = typeof values["simulation.noteworthyCurve"] === "number" ? (values["simulation.noteworthyCurve"] as number) : defaults.noteworthyCurve;
+  updateCurvePreview(root, nw, curve);
 }
 
 function formatValue(v: number, step: number): string {
