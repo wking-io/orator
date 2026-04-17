@@ -346,23 +346,27 @@ function buildSlider(s: SliderDef): HTMLElement {
 
 function buildToggle(s: SliderDef): HTMLElement {
   const wrapper = document.createElement("div");
-  wrapper.className = "dialkit-slider-wrapper";
+  wrapper.className = "dialkit-toggle-wrapper";
+  wrapper.style.cssText = "position:relative;height:var(--dial-row-height);";
 
   const row = document.createElement("div");
-  row.className = "dialkit-slider";
+  row.className = "dialkit-toggle-row";
   row.dataset.path = s.path;
   row.style.cssText =
-    "display:flex;align-items:center;justify-content:space-between;cursor:pointer;";
-
-  const label = document.createElement("span");
-  label.className = "dialkit-slider-label";
-  label.textContent = s.label;
+    "display:flex;align-items:center;height:100%;padding:0 10px;cursor:pointer;gap:8px;";
 
   const dot = document.createElement("span");
   dot.className = "dialkit-dirty-dot";
   dot.title = "Double-click to reset";
 
+  const label = document.createElement("span");
+  label.className = "dialkit-toggle-label";
+  label.style.cssText =
+    "flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:rgba(255,255,255,0.65);";
+  label.textContent = s.label;
+
   const track = document.createElement("div");
+  track.dataset.toggleTrack = "";
   track.style.cssText =
     "width:32px;height:16px;border-radius:8px;position:relative;transition:background 0.15s;flex-shrink:0;";
   track.style.background = s.value ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.15)";
@@ -464,7 +468,7 @@ function buildCurvePreview(): HTMLElement {
   return wrapper;
 }
 
-const DIA_MIN = 4;
+const DIA_MIN = 8;
 const DIA_MAX = 56;
 
 /** Same normalization as simulation.tsx computeNw — maps raw pow to 4..44px diameter */
@@ -515,9 +519,8 @@ function updateCurvePreview(root: HTMLElement, noteworthy: number, curve: number
 }
 
 const pathToKey: Record<string, keyof typeof defaults> = {
-  "simulation.opportunityCount": "opportunityCount",
   "simulation.networkingCount": "networkingCount",
-  "simulation.mainGravity": "mainGravity",
+  "simulation.gravityMultiplier": "gravityMultiplier",
   "simulation.fogOfWar": "fogOfWar",
   "simulation.fogDistance": "fogDistance",
 };
@@ -563,10 +566,23 @@ function syncSliders(root: HTMLElement, values: Record<string, unknown>) {
     if (valueEl) valueEl.textContent = formatValue(v, step);
     if (dotEl) dotEl.style.display = dirty.has(path) ? "" : "none";
 
-    // Toggle sync
-    let trackEl = slider.querySelector("div[style*='border-radius:8px']") as HTMLElement | null;
+  }
+
+  // Toggle sync
+  const toggleEls = Array.from(
+    root.querySelectorAll(".dialkit-toggle-row[data-path]"),
+  ) as HTMLElement[];
+  for (const toggleRow of toggleEls) {
+    const path = toggleRow.dataset.path!;
+    const v = values[path];
+    if (typeof v !== "number") continue;
+
+    const dotEl = toggleRow.querySelector(".dialkit-dirty-dot") as HTMLElement | null;
+    if (dotEl) dotEl.style.display = dirty.has(path) ? "" : "none";
+
+    const trackEl = toggleRow.querySelector("[data-toggle-track]") as HTMLElement | null;
     if (trackEl) {
-      let thumbEl = trackEl.firstElementChild as HTMLElement | null;
+      const thumbEl = trackEl.firstElementChild as HTMLElement | null;
       trackEl.style.background = v ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.15)";
       if (thumbEl) thumbEl.style.left = v ? "18px" : "2px";
     }

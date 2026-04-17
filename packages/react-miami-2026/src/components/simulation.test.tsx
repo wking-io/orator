@@ -11,17 +11,17 @@ import {
 
 describe("Simulation physics", () => {
   function makeState(
-    overrides?: Partial<{ w: number; h: number; gravity: number; net: number; opp: number }>,
+    overrides?: Partial<{ w: number; h: number; gravity: number; net: number }>,
   ): SimState {
-    let { w = 800, h = 600, gravity = 1, net = 3, opp = 10 } = overrides ?? {};
-    return initState(w, h, gravity, net, opp);
+    let { w = 800, h = 600, gravity = 1, net = 3 } = overrides ?? {};
+    return initState(w, h, gravity, net);
   }
 
   describe("initState", () => {
     it("creates the correct number of entities", () => {
-      let state = makeState({ net: 5, opp: 20 });
+      let state = makeState({ net: 5 });
       expect(state.networking.length).toBe(5);
-      expect(state.opportunities.length).toBe(20);
+      expect(state.opportunities.length).toBe(Math.floor(50 * Math.pow(1.1, 5)));
       expect(state.main.kind).toBe("main");
     });
 
@@ -32,7 +32,7 @@ describe("Simulation physics", () => {
     });
 
     it("places opportunities within bounds", () => {
-      let state = makeState({ w: 400, h: 300, net: 0, opp: 30 });
+      let state = makeState({ w: 400, h: 300, net: 0 });
       for (let opp of state.opportunities) {
         expect(opp.x).toBeGreaterThanOrEqual(opp.radius);
         expect(opp.x).toBeLessThanOrEqual(400 - opp.radius);
@@ -42,7 +42,7 @@ describe("Simulation physics", () => {
     });
 
     it("networking nodes start at origin before first step", () => {
-      let state = makeState({ w: 400, h: 300, net: 3, opp: 0 });
+      let state = makeState({ w: 400, h: 300, net: 3 });
       // Before stepping, networking nodes are at (0,0) — orbit positions them
       step(state, 0.016);
       for (let nc of state.networking) {
@@ -71,7 +71,7 @@ describe("Simulation physics", () => {
     });
 
     it("keeps entities within bounds after stepping", () => {
-      let state = makeState({ w: 200, h: 200, net: 5, opp: 20 });
+      let state = makeState({ w: 200, h: 200, net: 5 });
       for (let i = 0; i < 100; i++) {
         step(state, 0.016);
       }
@@ -94,7 +94,7 @@ describe("Simulation physics", () => {
     });
 
     it("captures opportunities into main orbit when near main", () => {
-      let state = makeState({ w: 800, h: 600, net: 0, opp: 5, gravity: 1 });
+      let state = makeState({ w: 800, h: 600, net: 0, gravity: 1 });
       let opp = state.opportunities[0]!;
       // Place right on top of main
       opp.x = state.main.x;
@@ -105,11 +105,10 @@ describe("Simulation physics", () => {
       step(state, 0.016);
 
       expect(opp.orbitTarget).toBe("main");
-      expect(state.opportunities.length).toBe(5);
     });
 
     it("sends opportunities near a networking node directly to main orbit", () => {
-      let state = makeState({ w: 800, h: 600, net: 1, opp: 1, gravity: 1 });
+      let state = makeState({ w: 800, h: 600, net: 1, gravity: 1 });
       // Step once so the networking node gets positioned in orbit
       step(state, 0.016);
       let nc = state.networking[0]!;
@@ -127,7 +126,7 @@ describe("Simulation physics", () => {
     });
 
     it("networking characters always orbit the main character", () => {
-      let state = makeState({ w: 800, h: 600, net: 2, opp: 0 });
+      let state = makeState({ w: 800, h: 600, net: 2 });
       step(state, 0.016);
       // Networking chars should be positioned around main
       for (let nc of state.networking) {
@@ -139,24 +138,22 @@ describe("Simulation physics", () => {
   });
 
   describe("reconcileState", () => {
-    it("adds entities when counts increase", () => {
-      let state = makeState({ net: 2, opp: 5 });
-      reconcileState(state, 4, 10, 1);
+    it("adds networking entities when count increases", () => {
+      let state = makeState({ net: 2 });
+      reconcileState(state, 4, 1);
       expect(state.networking.length).toBe(4);
-      expect(state.opportunities.length).toBe(10);
     });
 
-    it("removes entities when counts decrease", () => {
-      let state = makeState({ net: 5, opp: 20 });
-      reconcileState(state, 2, 8, 1);
+    it("removes networking entities when count decreases", () => {
+      let state = makeState({ net: 5 });
+      reconcileState(state, 2, 1);
       expect(state.networking.length).toBe(2);
-      expect(state.opportunities.length).toBe(8);
     });
 
-    it("updates mainGravity", () => {
+    it("updates gravityMultiplier", () => {
       let state = makeState({ gravity: 1 });
-      reconcileState(state, state.networking.length, state.opportunities.length, 2.5);
-      expect(state.mainGravity).toBe(2.5);
+      reconcileState(state, state.networking.length, 2.5);
+      expect(state.gravityMultiplier).toBe(2.5);
     });
   });
 

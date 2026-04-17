@@ -1,14 +1,13 @@
 import "./style.css";
-import { TitleSlide } from "./slides/01-title";
-import { IntroSlide } from "./slides/02-intro";
-import { CodeDemoSlide } from "./slides/03-code-demo";
-import { ClosingSlide } from "./slides/04-closing";
+import { BeginSlide } from "./slides/00-begin";
+import { NoteworthySlide } from "./slides/01-noteworthy";
+import { NetworkSlide } from "./slides/02-network";
 
 export const deck = {
   meta: {
-    title: "Building Presentations with Orator",
-    author: "Speaker Name",
+    title: "The Network Effect",
+    author: "Will King",
     event: "React Miami 2026",
   },
-  slides: [TitleSlide, IntroSlide, CodeDemoSlide, ClosingSlide],
+  slides: [BeginSlide, NoteworthySlide, NetworkSlide],
 };

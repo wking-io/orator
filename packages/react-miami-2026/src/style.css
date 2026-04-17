@@ -4,23 +4,22 @@
 @source "./";
 
 @theme {
-  --color-slide-bg: #e2d4c5;
-  --color-slide-fg: #2a1f2d;
-  --color-accent: #3b82f6;
+  --color-slide-bg: oklch(88% 0.011 106.6);
+  --color-slide-fg: oklch(22.8% 0.013 107.4);
+  --color-accent: oklch(70% 0.270 0);
   --color-muted: #a1a1aa;
-  --color-surface: #18181b;
-  --color-border: #27272a;
   --font-sans: Inter, system-ui, sans-serif;
-  --font-display: SCHABO, Inter, system-ui, sans-serif;
-  --font-heading: "Clash Display", Inter, system-ui, sans-serif;
-  --font-body: var(--font-sans);
-  --font-code: "Fira Code", monospace;
 }
 
 :root {
-  --sim-main: #241348;
-  --sim-opportunity: #e70e77;
-  --sim-networking: #130ff0;
+  --sim-main: var(--color-slide-fg);
+  --sim-opportunity: oklch(62.8% 0.254 143.2);
+  --sim-networking: var(--color-accent);
+}
+
+.dark {
+  --color-slide-bg: oklch(22.8% 0.013 107.4);
+  --color-slide-fg: oklch(88% 0.011 106.6);
 }
 
 .dialkit-panel-inner {

@@ -1,5 +1,5 @@
 import type { Handle, Props, RemixNode } from "@remix-run/component";
-import { cn } from "@utils/cn";
+import { cn } from "@orator/utils/cn";
 
 export function SlideRoot(_handle: Handle) {
   return ({

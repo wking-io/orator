@@ -3,9 +3,11 @@ import type { Handle, Props } from "@remix-run/component";
 // ── Constants ──────────────────────────────────────────────
 
 const MAIN_RADIUS = 18;
-const NW_MIN_RADIUS = 2; // 4px diameter
+const NW_MIN_RADIUS = 4; // 8px diameter
 const NW_MAX_RADIUS = 28; // 56px diameter
 const NETWORKING_RADIUS = 5;
+const NETWORKING_MIN_SCALE = 0.4; // weakest node visual scale
+const NETWORKING_MAX_SCALE = 1.6; // strongest node visual scale
 const OPPORTUNITY_RADIUS = 5;
 
 const NETWORKING_GRAVITY_MIN = 0.4;
@@ -28,9 +30,9 @@ const FALLBACK_MAIN_COLOR = "#241348";
 const FALLBACK_OPPORTUNITY_COLOR = "#E70E77";
 const FALLBACK_NETWORKING_COLOR = "#130FF0";
 
-const FOG_COLOR_R = 0xcf;
-const FOG_COLOR_G = 0xc1;
-const FOG_COLOR_B = 0xb3;
+const FOG_COLOR_R = 0xab;
+const FOG_COLOR_G = 0xab;
+const FOG_COLOR_B = 0x9c;
 const FOG_TRANSITION_WIDTH = 30;
 
 // prettier-ignore
@@ -58,6 +60,7 @@ interface MainChar extends Entity {
 interface NetworkingChar extends Entity {
   kind: "networking";
   gravity: number;
+  power: number; // 0–1 scale that drives both visual size and pull strength
   orbitTheta: number;
   orbitSpeed: number;
 }
@@ -76,13 +79,11 @@ export interface SimState {
   main: MainChar;
   networking: NetworkingChar[];
   opportunities: Opportunity[];
-  mainGravity: number;
+  gravityMultiplier: number;
   noteworthy: number;
   noteworthyTarget: number;
   noteworthyPull: number;
   speed: number;
-  networkingOrbitSpeed: number;
-  opportunityOrbitSpeed: number;
   fogOfWar: boolean;
   fogDistance: number;
   networkingPullBoost: number;
@@ -104,6 +105,11 @@ function computeNw(noteworthy: number, curve: number): number {
   let raw = Math.pow(noteworthy, curve);
   let t = rawMax === rawMin ? 0 : (raw - rawMin) / (rawMax - rawMin);
   return (NW_MIN_RADIUS + t * (NW_MAX_RADIUS - NW_MIN_RADIUS)) / MAIN_RADIUS;
+}
+
+/** Map networking power (0–1) to a visual scale factor */
+function nwScale(power: number): number {
+  return NETWORKING_MIN_SCALE + power * (NETWORKING_MAX_SCALE - NETWORKING_MIN_SCALE);
 }
 
 function rand(min: number, max: number) {
@@ -201,6 +207,7 @@ export function createMain(w: number, h: number): MainChar {
 }
 
 export function createNetworking(_w: number, _h: number): NetworkingChar {
+  let power = rand(0, 1);
   return {
     kind: "networking",
     x: 0,
@@ -208,7 +215,8 @@ export function createNetworking(_w: number, _h: number): NetworkingChar {
     vx: 0,
     vy: 0,
     radius: NETWORKING_RADIUS,
-    gravity: rand(NETWORKING_GRAVITY_MIN, NETWORKING_GRAVITY_MAX),
+    gravity: NETWORKING_GRAVITY_MIN + power * (NETWORKING_GRAVITY_MAX - NETWORKING_GRAVITY_MIN),
+    power,
     orbitTheta: rand(0, Math.PI * 2),
     orbitSpeed: rand(0.8, 2.0),
   };
@@ -250,14 +258,11 @@ export function createOpportunity(
 export function initState(
   w: number,
   h: number,
-  mainGravity: number,
+  gravityMultiplier: number,
   networkingCount: number,
-  opportunityCount: number,
   noteworthy = 1,
   noteworthyPull = 0,
   speed = 1,
-  networkingOrbitSpeed = 1,
-  opportunityOrbitSpeed = 1,
   fogOfWar = false,
   fogDistance = 50,
   networkingPullBoost = 2,
@@ -270,8 +275,9 @@ export function initState(
   let networking: NetworkingChar[] = [];
   for (let i = 0; i < networkingCount; i++) networking.push(createNetworking(w, h));
 
+  let effectiveOpportunityCount = Math.floor(50 * Math.pow(1.1, networkingCount));
   let opportunities: Opportunity[] = [];
-  for (let i = 0; i < opportunityCount; i++)
+  for (let i = 0; i < effectiveOpportunityCount; i++)
     opportunities.push(createOpportunity(w, h, main.x, main.y));
 
   return {
@@ -280,13 +286,11 @@ export function initState(
     main,
     networking,
     opportunities,
-    mainGravity,
+    gravityMultiplier,
     noteworthy,
     noteworthyTarget: noteworthy,
     noteworthyPull,
     speed,
-    networkingOrbitSpeed,
-    opportunityOrbitSpeed,
     fogOfWar,
     fogDistance,
     networkingPullBoost,
@@ -299,13 +303,10 @@ export function initState(
 export function reconcileState(
   state: SimState,
   networkingCount: number,
-  opportunityCount: number,
-  mainGravity: number,
+  gravityMultiplier: number,
   noteworthy = 1,
   noteworthyPull = 0,
   speed = 1,
-  networkingOrbitSpeed = 1,
-  opportunityOrbitSpeed = 1,
   fogOfWar = false,
   fogDistance = 50,
   networkingPullBoost = 2,
@@ -313,12 +314,10 @@ export function reconcileState(
   noteworthyCurve = 2,
   dotGridSpacing = 8,
 ) {
-  state.mainGravity = mainGravity;
+  state.gravityMultiplier = gravityMultiplier;
   state.noteworthyTarget = noteworthy;
   state.noteworthyPull = noteworthyPull;
   state.speed = speed;
-  state.networkingOrbitSpeed = networkingOrbitSpeed;
-  state.opportunityOrbitSpeed = opportunityOrbitSpeed;
   state.fogOfWar = fogOfWar;
   state.fogDistance = fogDistance;
   state.networkingPullBoost = networkingPullBoost;
@@ -333,12 +332,13 @@ export function reconcileState(
     state.networking.pop();
   }
 
-  while (state.opportunities.length < opportunityCount) {
+  let effectiveOpportunityCount = Math.floor(50 * Math.pow(1.1, networkingCount));
+  while (state.opportunities.length < effectiveOpportunityCount) {
     state.opportunities.push(
       createOpportunity(state.width, state.height, state.main.x, state.main.y),
     );
   }
-  while (state.opportunities.length > opportunityCount) {
+  while (state.opportunities.length > effectiveOpportunityCount) {
     state.opportunities.pop();
   }
 }
@@ -372,17 +372,17 @@ export function step(state: SimState, dt: number) {
     opportunities,
     width: w,
     height: h,
-    mainGravity,
+    gravityMultiplier,
     noteworthy,
     noteworthyPull,
     speed,
-    networkingOrbitSpeed,
-    opportunityOrbitSpeed,
   } = state;
   let sdt = dt * speed;
   let nw = computeNw(noteworthy, state.noteworthyCurve);
-  let mainStrength = BASE_MAIN_GRAVITY * mainGravity * nw;
-  let mainGravRadius = MAIN_RADIUS * 4 * Math.sqrt(mainGravity) * nw;
+  let opportunitySdt = sdt * noteworthy;
+  let scaledGravity = 1.2 * Math.pow(gravityMultiplier, nw);
+  let mainStrength = BASE_MAIN_GRAVITY * scaledGravity * nw;
+  let mainGravRadius = MAIN_RADIUS * 4 * Math.sqrt(scaledGravity) * nw;
 
   // Noteworthy pull: subtle canvas-wide gravity toward main, scales with character size
   // Uses a large radius (diagonal of canvas) so it reaches everywhere, but force
@@ -404,7 +404,7 @@ export function step(state: SimState, dt: number) {
   // Networking characters always orbit on the gravity field border
   let ncOrbitR = mainGravRadius;
   for (let nc of networking) {
-    nc.orbitTheta += nc.orbitSpeed * networkingOrbitSpeed * sdt;
+    nc.orbitTheta += nc.orbitSpeed * 0.6 * sdt;
     nc.x = main.x + ncOrbitR * Math.cos(nc.orbitTheta);
     nc.y = main.y + ncOrbitR * Math.sin(nc.orbitTheta);
     nc.vx = main.vx;
@@ -413,14 +413,12 @@ export function step(state: SimState, dt: number) {
 
   // Opportunity orbit radii — half the gravity area radius
   let oppOrbitMain = mainGravRadius * 0.5;
-  let ncCaptureRadius = GRAVITY_RADIUS_NETWORKING;
-
   // Opportunities
   for (let opp of opportunities) {
     if (opp.orbitTarget === "none") {
       // Free mode: wander + gravity pull
-      opp.vx += rand(-WANDER_JITTER * 0.5, WANDER_JITTER * 0.5) * sdt;
-      opp.vy += rand(-WANDER_JITTER * 0.5, WANDER_JITTER * 0.5) * sdt;
+      opp.vx += rand(-WANDER_JITTER * 0.5, WANDER_JITTER * 0.5) * opportunitySdt;
+      opp.vy += rand(-WANDER_JITTER * 0.5, WANDER_JITTER * 0.5) * opportunitySdt;
 
       // Gravity from main character
       applyGravity(opp, main, mainStrength, mainGravRadius);
@@ -430,17 +428,19 @@ export function step(state: SimState, dt: number) {
         applyGravity(opp, main, ambientPullStrength, ambientPullRadius);
       }
 
-      // Gravity from networking characters
+      // Gravity from networking characters — radius and strength scale with power
       for (let nc of networking) {
+        let scale = nwScale(nc.power);
         let ncStrength = 200 * nc.gravity;
+        let ncCaptureRadius = GRAVITY_RADIUS_NETWORKING * scale;
         applyGravity(opp, nc, ncStrength, ncCaptureRadius);
       }
 
       opp.vx *= DAMPING;
       opp.vy *= DAMPING;
       clampSpeed(opp);
-      opp.x += opp.vx * sdt;
-      opp.y += opp.vy * sdt;
+      opp.x += opp.vx * opportunitySdt;
+      opp.y += opp.vy * opportunitySdt;
       bounce(opp, w, h);
 
       // Check capture by main character — capture at orbit radius so there's no snap
@@ -455,7 +455,7 @@ export function step(state: SimState, dt: number) {
       // Check capture by a networking character — send straight to main orbit
       for (let ni = 0; ni < networking.length; ni++) {
         let nc = networking[ni]!;
-        if (distance(opp, nc) <= NETWORKING_RADIUS * 2) {
+        if (distance(opp, nc) <= NETWORKING_RADIUS * nwScale(nc.power) * 2) {
           opp.orbitTarget = "main";
           opp.orbitTheta = Math.atan2(opp.y - main.y, opp.x - main.x);
           opp.currentOrbitRadius = distance(opp, main);
@@ -467,7 +467,7 @@ export function step(state: SimState, dt: number) {
       let lerpRate = 1 - Math.pow(0.05, sdt); // smooth exponential ease
       opp.currentOrbitRadius += (oppOrbitMain - opp.currentOrbitRadius) * lerpRate;
 
-      opp.orbitTheta += opp.orbitSpeed * opportunityOrbitSpeed * sdt;
+      opp.orbitTheta += opp.orbitSpeed * 0.3 * sdt;
       opp.x = main.x + opp.currentOrbitRadius * Math.cos(opp.orbitTheta);
       opp.y = main.y + opp.currentOrbitRadius * Math.sin(opp.orbitTheta);
       opp.vx = main.vx;
@@ -578,12 +578,11 @@ function drawFog(ctx: CanvasRenderingContext2D, state: SimState) {
 
   // Compute visible areas
   let nwFog = computeNw(state.noteworthy, state.noteworthyCurve);
-  let mainGravRadius = MAIN_RADIUS * 4 * Math.sqrt(state.mainGravity) * nwFog;
+  let scaledGravityFog = 1.2 * Math.pow(state.gravityMultiplier, nwFog);
+  let mainGravRadius = MAIN_RADIUS * 4 * Math.sqrt(scaledGravityFog) * nwFog;
   let ncCount = state.networking.length;
   let effectiveFogDist = state.fogDistance * Math.pow(state.networkFogMultiplier, ncCount);
   let mainVisR = mainGravRadius + effectiveFogDist;
-  let ncGravRadius = NETWORKING_RADIUS * 4;
-
   // Build circles: main + networking nodes
   let cxs = [state.main.x];
   let cys = [state.main.y];
@@ -591,7 +590,7 @@ function drawFog(ctx: CanvasRenderingContext2D, state: SimState) {
   for (let nc of state.networking) {
     cxs.push(nc.x);
     cys.push(nc.y);
-    crs.push(ncGravRadius);
+    crs.push(NETWORKING_RADIUS * 4 * nwScale(nc.power));
   }
   let cLen = cxs.length;
 
@@ -666,12 +665,19 @@ function draw(
   let nw = computeNw(state.noteworthy, state.noteworthyCurve);
 
   // Main gravity field (behind everything)
-  let mainGravRadius = MAIN_RADIUS * 4 * Math.sqrt(state.mainGravity) * nw;
-  drawGravityField(ctx, state.main.x, state.main.y, mainGravRadius, colors.main, state.dotGridSpacing);
+  let scaledGravityDraw = 1.2 * Math.pow(state.gravityMultiplier, nw);
+  let mainGravRadius = MAIN_RADIUS * 4 * Math.sqrt(scaledGravityDraw) * nw;
+  drawGravityField(
+    ctx,
+    state.main.x,
+    state.main.y,
+    mainGravRadius,
+    colors.main,
+    state.dotGridSpacing,
+  );
 
   // Networking gravity fields — clip out the main gravity area so only the
   // non-intersecting portion is visible
-  let ncGravRadius = NETWORKING_RADIUS * 4;
   ctx.save();
   ctx.beginPath();
   ctx.rect(0, 0, state.width, state.height);
@@ -679,6 +685,7 @@ function draw(
   ctx.arc(state.main.x, state.main.y, mainGravRadius, 0, Math.PI * 2, true);
   ctx.clip("evenodd");
   for (let nc of state.networking) {
+    let ncGravRadius = NETWORKING_RADIUS * 4 * nwScale(nc.power);
     drawGravityField(ctx, nc.x, nc.y, ncGravRadius, colors.networking, state.dotGridSpacing);
   }
   ctx.restore();
@@ -709,9 +716,9 @@ function draw(
     ctx.restore();
   }
 
-  // Networking pentagons (on top of their gravity fields)
+  // Networking pentagons (on top of their gravity fields) — size scales with power
   for (let nc of state.networking) {
-    drawPolygon(ctx, nc.x, nc.y, NETWORKING_RADIUS, 5);
+    drawPolygon(ctx, nc.x, nc.y, NETWORKING_RADIUS * nwScale(nc.power), 5);
     ctx.fillStyle = colors.networking;
     ctx.fill();
   }
@@ -736,14 +743,11 @@ export function Simulation(handle: Handle) {
   let lastTime = 0;
 
   let currentProps = {
-    opportunityCount: 40,
     networkingCount: 6,
-    mainGravity: 1,
+    gravityMultiplier: 1,
     noteworthy: 1,
     noteworthyPull: 0,
     speed: 1,
-    networkingOrbitSpeed: 1,
-    opportunityOrbitSpeed: 1,
     fogOfWar: false,
     fogDistance: 50,
     networkingPullBoost: 2,
@@ -828,14 +832,11 @@ export function Simulation(handle: Handle) {
 
   return (
     props: Props<"canvas"> & {
-      opportunityCount?: number;
       networkingCount?: number;
-      mainGravity?: number;
+      gravityMultiplier?: number;
       noteworthy?: number;
       noteworthyPull?: number;
       speed?: number;
-      networkingOrbitSpeed?: number;
-      opportunityOrbitSpeed?: number;
       fogOfWar?: boolean;
       fogDistance?: number;
       networkingPullBoost?: number;
@@ -846,14 +847,11 @@ export function Simulation(handle: Handle) {
     },
   ) => {
     let {
-      opportunityCount,
       networkingCount,
-      mainGravity,
+      gravityMultiplier,
       noteworthy,
       noteworthyPull,
       speed,
-      networkingOrbitSpeed,
-      opportunityOrbitSpeed,
       fogOfWar,
       fogDistance,
       networkingPullBoost,
@@ -863,14 +861,11 @@ export function Simulation(handle: Handle) {
       onStateInit,
       ...rest
     } = props;
-    currentProps.opportunityCount = opportunityCount ?? 40;
     currentProps.networkingCount = networkingCount ?? 6;
-    currentProps.mainGravity = mainGravity ?? 1;
+    currentProps.gravityMultiplier = gravityMultiplier ?? 1;
     currentProps.noteworthy = noteworthy ?? 1;
     currentProps.noteworthyPull = noteworthyPull ?? 0;
     currentProps.speed = speed ?? 1;
-    currentProps.networkingOrbitSpeed = networkingOrbitSpeed ?? 1;
-    currentProps.opportunityOrbitSpeed = opportunityOrbitSpeed ?? 1;
     currentProps.fogOfWar = fogOfWar ?? false;
     currentProps.fogDistance = fogDistance ?? 50;
     currentProps.networkingPullBoost = networkingPullBoost ?? 2;
@@ -882,13 +877,10 @@ export function Simulation(handle: Handle) {
       reconcileState(
         state,
         currentProps.networkingCount,
-        currentProps.opportunityCount,
-        currentProps.mainGravity,
+        currentProps.gravityMultiplier,
         currentProps.noteworthy,
         currentProps.noteworthyPull,
         currentProps.speed,
-        currentProps.networkingOrbitSpeed,
-        currentProps.opportunityOrbitSpeed,
         currentProps.fogOfWar,
         currentProps.fogDistance,
         currentProps.networkingPullBoost,
@@ -901,7 +893,7 @@ export function Simulation(handle: Handle) {
     return (
       <canvas
         {...rest}
-        style="display:block;width:100%;height:100%"
+        class="block w-full h-full"
         connect={(el: HTMLCanvasElement) => {
           canvas = el;
           readColors(el);
@@ -912,14 +904,11 @@ export function Simulation(handle: Handle) {
           state = initState(
             w || 800,
             h || 600,
-            currentProps.mainGravity,
+            currentProps.gravityMultiplier,
             currentProps.networkingCount,
-            currentProps.opportunityCount,
             currentProps.noteworthy,
             currentProps.noteworthyPull,
             currentProps.speed,
-            currentProps.networkingOrbitSpeed,
-            currentProps.opportunityOrbitSpeed,
             currentProps.fogOfWar,
             currentProps.fogDistance,
             currentProps.networkingPullBoost,
